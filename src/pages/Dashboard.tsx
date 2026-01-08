@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth, STRIPE_PRODUCTS } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
   FileText, Plus, Eye, Download, TrendingUp, Calendar, 
-  LogOut, Settings, Crown, Loader2, MoreVertical, Trash2, Edit 
+  LogOut, Crown, Loader2, MoreVertical, Trash2, Edit, FileDown 
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -16,6 +16,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from '@/hooks/use-toast';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 interface CV {
   id: string;
@@ -26,6 +28,12 @@ interface CV {
   last_score: number | null;
   created_at: string;
   updated_at: string;
+  personal_info: Record<string, string> | null;
+  experience: Array<Record<string, string>> | null;
+  education: Array<Record<string, string>> | null;
+  skills: Array<Record<string, string>> | null;
+  languages: Array<Record<string, string>> | null;
+  summary: string | null;
 }
 
 const Dashboard = () => {
@@ -34,6 +42,7 @@ const Dashboard = () => {
   const { toast } = useToast();
   const [cvs, setCvs] = useState<CV[]>([]);
   const [loadingCvs, setLoadingCvs] = useState(true);
+  const [exportingId, setExportingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -75,6 +84,134 @@ const Dashboard = () => {
         description: 'Impossible de supprimer le CV',
         variant: 'destructive' 
       });
+    }
+  };
+
+  const handleExportPDF = async (cv: CV) => {
+    setExportingId(cv.id);
+    
+    try {
+      // Create a temporary container for the CV content
+      const container = document.createElement('div');
+      container.style.width = '210mm';
+      container.style.padding = '20mm';
+      container.style.backgroundColor = 'white';
+      container.style.fontFamily = 'Arial, sans-serif';
+      container.style.position = 'absolute';
+      container.style.left = '-9999px';
+      container.style.top = '0';
+      
+      const personalInfo = cv.personal_info || {};
+      const experience = cv.experience || [];
+      const education = cv.education || [];
+      const skills = cv.skills || [];
+      const languages = cv.languages || [];
+      
+      container.innerHTML = `
+        <div style="color: #1a1a1a;">
+          <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #6366f1; padding-bottom: 20px;">
+            <h1 style="margin: 0; font-size: 28px; color: #1a1a1a;">${personalInfo.fullName || 'Sans nom'}</h1>
+            <p style="margin: 8px 0 0; color: #666; font-size: 14px;">
+              ${[personalInfo.email, personalInfo.phone, personalInfo.location].filter(Boolean).join(' • ')}
+            </p>
+          </div>
+          
+          ${cv.summary ? `
+            <div style="margin-bottom: 25px;">
+              <h2 style="font-size: 16px; color: #6366f1; margin: 0 0 10px; text-transform: uppercase; letter-spacing: 1px;">Résumé</h2>
+              <p style="margin: 0; line-height: 1.6; color: #444;">${cv.summary}</p>
+            </div>
+          ` : ''}
+          
+          ${experience.length > 0 ? `
+            <div style="margin-bottom: 25px;">
+              <h2 style="font-size: 16px; color: #6366f1; margin: 0 0 15px; text-transform: uppercase; letter-spacing: 1px;">Expérience Professionnelle</h2>
+              ${experience.map(exp => `
+                <div style="margin-bottom: 15px;">
+                  <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                    <h3 style="margin: 0; font-size: 14px; font-weight: 600;">${exp.position || ''}</h3>
+                    <span style="font-size: 12px; color: #666;">${exp.startDate || ''} - ${exp.endDate || ''}</span>
+                  </div>
+                  <p style="margin: 4px 0; color: #6366f1; font-size: 13px;">${exp.company || ''}</p>
+                  <p style="margin: 8px 0 0; font-size: 13px; line-height: 1.5; color: #444;">${exp.description || ''}</p>
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
+          
+          ${education.length > 0 ? `
+            <div style="margin-bottom: 25px;">
+              <h2 style="font-size: 16px; color: #6366f1; margin: 0 0 15px; text-transform: uppercase; letter-spacing: 1px;">Formation</h2>
+              ${education.map(edu => `
+                <div style="margin-bottom: 12px;">
+                  <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                    <h3 style="margin: 0; font-size: 14px; font-weight: 600;">${edu.degree || ''}</h3>
+                    <span style="font-size: 12px; color: #666;">${edu.startDate || ''} - ${edu.endDate || ''}</span>
+                  </div>
+                  <p style="margin: 4px 0; color: #6366f1; font-size: 13px;">${edu.school || ''}</p>
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
+          
+          <div style="display: flex; gap: 40px;">
+            ${skills.length > 0 ? `
+              <div style="flex: 1;">
+                <h2 style="font-size: 16px; color: #6366f1; margin: 0 0 10px; text-transform: uppercase; letter-spacing: 1px;">Compétences</h2>
+                <ul style="margin: 0; padding-left: 20px;">
+                  ${skills.map(skill => `<li style="font-size: 13px; margin-bottom: 5px;">${skill.name}${skill.level ? ` (${skill.level})` : ''}</li>`).join('')}
+                </ul>
+              </div>
+            ` : ''}
+            
+            ${languages.length > 0 ? `
+              <div style="flex: 1;">
+                <h2 style="font-size: 16px; color: #6366f1; margin: 0 0 10px; text-transform: uppercase; letter-spacing: 1px;">Langues</h2>
+                <ul style="margin: 0; padding-left: 20px;">
+                  ${languages.map(lang => `<li style="font-size: 13px; margin-bottom: 5px;">${lang.name}${lang.level ? ` (${lang.level})` : ''}</li>`).join('')}
+                </ul>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(container);
+      
+      const canvas = await html2canvas(container, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+      });
+      
+      document.body.removeChild(container);
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`${cv.title || 'mon-cv'}.pdf`);
+      
+      // Update download count
+      await supabase
+        .from('cvs')
+        .update({ downloads_count: (cv.downloads_count || 0) + 1 })
+        .eq('id', cv.id);
+      
+      setCvs(cvs.map(c => c.id === cv.id ? { ...c, downloads_count: (c.downloads_count || 0) + 1 } : c));
+      
+      toast({ title: 'PDF exporté avec succès!' });
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      toast({ 
+        title: 'Erreur', 
+        description: 'Impossible d\'exporter le PDF',
+        variant: 'destructive' 
+      });
+    } finally {
+      setExportingId(null);
     }
   };
 
@@ -275,6 +412,10 @@ const Dashboard = () => {
                             Modifier
                           </Link>
                         </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleExportPDF(cv)}>
+                          <FileDown className="w-4 h-4 mr-2" />
+                          Exporter PDF
+                        </DropdownMenuItem>
                         <DropdownMenuItem 
                           className="text-destructive"
                           onClick={() => handleDeleteCV(cv.id)}
@@ -308,6 +449,18 @@ const Dashboard = () => {
                         <Edit className="w-4 h-4 mr-1" />
                         Éditer
                       </Link>
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => handleExportPDF(cv)}
+                      disabled={exportingId === cv.id}
+                    >
+                      {exportingId === cv.id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <FileDown className="w-4 h-4" />
+                      )}
                     </Button>
                     <Button variant="outline" size="sm" className="flex-1" asChild>
                       <Link to={`/analyze/${cv.id}`}>
