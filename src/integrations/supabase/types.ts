@@ -14,7 +14,152 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      cvs: {
+        Row: {
+          certifications: Json | null
+          created_at: string
+          downloads_count: number | null
+          education: Json | null
+          experience: Json | null
+          id: string
+          is_public: boolean | null
+          languages: Json | null
+          last_analysis: Json | null
+          last_score: number | null
+          personal_info: Json | null
+          skills: Json | null
+          summary: string | null
+          template_id: string
+          title: string
+          updated_at: string
+          user_id: string
+          views_count: number | null
+        }
+        Insert: {
+          certifications?: Json | null
+          created_at?: string
+          downloads_count?: number | null
+          education?: Json | null
+          experience?: Json | null
+          id?: string
+          is_public?: boolean | null
+          languages?: Json | null
+          last_analysis?: Json | null
+          last_score?: number | null
+          personal_info?: Json | null
+          skills?: Json | null
+          summary?: string | null
+          template_id?: string
+          title?: string
+          updated_at?: string
+          user_id: string
+          views_count?: number | null
+        }
+        Update: {
+          certifications?: Json | null
+          created_at?: string
+          downloads_count?: number | null
+          education?: Json | null
+          experience?: Json | null
+          id?: string
+          is_public?: boolean | null
+          languages?: Json | null
+          last_analysis?: Json | null
+          last_score?: number | null
+          personal_info?: Json | null
+          skills?: Json | null
+          summary?: string | null
+          template_id?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+          views_count?: number | null
+        }
+        Relationships: []
+      }
+      job_analyses: {
+        Row: {
+          analysis_result: Json | null
+          company_name: string | null
+          compatibility_score: number | null
+          created_at: string
+          cv_id: string | null
+          id: string
+          job_description: string
+          job_title: string | null
+          recommendations: Json | null
+          user_id: string
+        }
+        Insert: {
+          analysis_result?: Json | null
+          company_name?: string | null
+          compatibility_score?: number | null
+          created_at?: string
+          cv_id?: string | null
+          id?: string
+          job_description: string
+          job_title?: string | null
+          recommendations?: Json | null
+          user_id: string
+        }
+        Update: {
+          analysis_result?: Json | null
+          company_name?: string | null
+          compatibility_score?: number | null
+          created_at?: string
+          cv_id?: string | null
+          id?: string
+          job_description?: string
+          job_title?: string | null
+          recommendations?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_analyses_cv_id_fkey"
+            columns: ["cv_id"]
+            isOneToOne: false
+            referencedRelation: "cvs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          stripe_customer_id: string | null
+          subscription_tier: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          stripe_customer_id?: string | null
+          subscription_tier?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          stripe_customer_id?: string | null
+          subscription_tier?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
