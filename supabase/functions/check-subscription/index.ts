@@ -74,8 +74,22 @@ serve(async (req) => {
 
     if (hasActiveSub) {
       const subscription = subscriptions.data[0];
-      subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
-      productId = subscription.items.data[0].price.product as string;
+      
+      // Safely handle the subscription end date
+      try {
+        if (subscription.current_period_end) {
+          const endTimestamp = typeof subscription.current_period_end === 'number' 
+            ? subscription.current_period_end 
+            : parseInt(String(subscription.current_period_end), 10);
+          if (!isNaN(endTimestamp)) {
+            subscriptionEnd = new Date(endTimestamp * 1000).toISOString();
+          }
+        }
+      } catch (dateError) {
+        logStep("Warning: Could not parse subscription end date", { error: String(dateError) });
+      }
+      
+      productId = subscription.items.data[0]?.price?.product as string;
       
       // Determine tier based on product ID
       if (productId === STRIPE_PRODUCTS.enterprise) {
@@ -84,7 +98,7 @@ serve(async (req) => {
         tier = "pro";
       }
       
-      logStep("Active subscription found", { subscriptionId: subscription.id, tier, endDate: subscriptionEnd });
+      logStep("Active subscription found", { subscriptionId: subscription.id, tier, productId, endDate: subscriptionEnd });
     } else {
       logStep("No active subscription found");
     }

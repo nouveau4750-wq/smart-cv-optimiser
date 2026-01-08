@@ -18,6 +18,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import type { Json } from '@/integrations/supabase/types';
 
 interface CV {
   id: string;
@@ -28,11 +29,11 @@ interface CV {
   last_score: number | null;
   created_at: string;
   updated_at: string;
-  personal_info: Record<string, string> | null;
-  experience: Array<Record<string, string>> | null;
-  education: Array<Record<string, string>> | null;
-  skills: Array<Record<string, string>> | null;
-  languages: Array<Record<string, string>> | null;
+  personal_info: Json | null;
+  experience: Json | null;
+  education: Json | null;
+  skills: Json | null;
+  languages: Json | null;
   summary: string | null;
 }
 
@@ -101,11 +102,13 @@ const Dashboard = () => {
       container.style.left = '-9999px';
       container.style.top = '0';
       
-      const personalInfo = cv.personal_info || {};
-      const experience = cv.experience || [];
-      const education = cv.education || [];
-      const skills = cv.skills || [];
-      const languages = cv.languages || [];
+      const personalInfo = (cv.personal_info && typeof cv.personal_info === 'object' && !Array.isArray(cv.personal_info)) 
+        ? cv.personal_info as Record<string, string> 
+        : {} as Record<string, string>;
+      const experience = (Array.isArray(cv.experience) ? cv.experience : []) as Array<Record<string, string>>;
+      const education = (Array.isArray(cv.education) ? cv.education : []) as Array<Record<string, string>>;
+      const skills = (Array.isArray(cv.skills) ? cv.skills : []) as Array<Record<string, string>>;
+      const languages = (Array.isArray(cv.languages) ? cv.languages : []) as Array<Record<string, string>>;
       
       container.innerHTML = `
         <div style="color: #1a1a1a;">
