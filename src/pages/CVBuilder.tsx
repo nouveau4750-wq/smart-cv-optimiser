@@ -152,12 +152,12 @@ const CVBuilder = () => {
       const cvPayload = {
         title,
         template_id: templateId,
-        personal_info: cvData.personalInfo as unknown as Record<string, unknown>,
+        personal_info: JSON.parse(JSON.stringify(cvData.personalInfo)),
         summary: cvData.summary,
-        experience: cvData.experience as unknown as Record<string, unknown>[],
-        education: cvData.education as unknown as Record<string, unknown>[],
-        skills: cvData.skills as unknown as Record<string, unknown>[],
-        languages: cvData.languages as unknown as Record<string, unknown>[],
+        experience: JSON.parse(JSON.stringify(cvData.experience)),
+        education: JSON.parse(JSON.stringify(cvData.education)),
+        skills: JSON.parse(JSON.stringify(cvData.skills)),
+        languages: JSON.parse(JSON.stringify(cvData.languages)),
         user_id: user.id,
       };
       let result;
