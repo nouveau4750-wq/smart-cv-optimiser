@@ -12,10 +12,10 @@ const logStep = (step: string, details?: any) => {
   console.log(`[CHECK-SUBSCRIPTION] ${step}${detailsStr}`);
 };
 
-// Stripe product IDs
+// Stripe product IDs - must match AuthContext.tsx
 const STRIPE_PRODUCTS = {
-  pro: "prod_SQFlsLcwZoSMlW",
-  enterprise: "prod_SQFmxBuZhEJgzm",
+  pro: "prod_Tkrkl2b8Sxbrca",
+  enterprise: "prod_Tkrk2I6aaPJIIt",
 };
 
 serve(async (req) => {
